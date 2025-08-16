@@ -52,6 +52,7 @@
             @if(auth()->user()->role_id == 1 || auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>
             @endif
+            <a href="{{route('worklog-missing-summary')}}" class="d-block py-1 ps-4">Missing Entries Summary</a>
         </div>
 
         <!-- Attendance Section -->
@@ -89,6 +90,7 @@
             @if(auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>
             @endif
+            <a href="{{route('worklog-missing-summary')}}" class="d-block py-1 ps-4">Missing Entries Summary</a>
         </div>
 
         <!-- Attendance Section -->
@@ -128,6 +130,7 @@
             @if(auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>
             @endif
+            <a href="{{route('worklog-missing-summary')}}" class="d-block py-1 ps-4">Missing Entries Summary</a>
         </div>
 
         <!-- Attendance Section for Sales Users with worklog access -->

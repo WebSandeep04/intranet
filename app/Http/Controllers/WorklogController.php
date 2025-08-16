@@ -338,10 +338,10 @@ class WorklogController extends Controller
         $selectedDate = $request->input('date');
         $user = Auth::user();
         
-        // Get user's creation date
+        // Get the current user's creation date
         $userCreatedDate = $user->created_at->format('Y-m-d');
         
-        // Check if selected date is before user creation date
+        // Check if selected date is before the current user's creation date
         if ($selectedDate < $userCreatedDate) {
             return response()->json([
                 'valid' => false,
@@ -350,13 +350,15 @@ class WorklogController extends Controller
         }
         
         // Check if there are any missing dates between user creation and selected date
-        $missingDates = $this->getMissingDates($userCreatedDate, $selectedDate);
+        // Use global validation to ensure ALL users with isWorklog = 1 have completed previous days
+        // Each user is only required to fill entries from their own creation date onwards
+        $missingDates = $this->getGlobalMissingDates($userCreatedDate, $selectedDate);
         
         if (!empty($missingDates)) {
             $firstMissingDate = $missingDates[0];
             return response()->json([
                 'valid' => false,
-                'message' => "You must fill worklog entries in chronological order. Please fill entries for {$firstMissingDate} first."
+                'message' => "System validation: All users with worklog access must complete entries for {$firstMissingDate} before anyone can fill entries for {$selectedDate}. Please ensure all team members complete their previous day entries."
             ]);
         }
         
@@ -398,14 +400,250 @@ class WorklogController extends Controller
         return $missingDates;
     }
 
+    /**
+     * Check if ALL users with isWorklog = 1 have filled their entries for a given date
+     * This is used for global validation to ensure chronological order across all users
+     */
+    private function checkAllUsersWorklogCompletion($date)
+    {
+        $tenantId = Auth::user()->tenant_id;
+        
+        // Get all users with isWorklog = 1 in the current tenant
+        $worklogUsers = \App\Models\User::where('is_worklog', 1)
+            ->where('tenant_id', $tenantId)
+            ->get();
+        
+        if ($worklogUsers->isEmpty()) {
+            return true; // No worklog users, so validation passes
+        }
+        
+        // Check if all worklog users have entries for this date
+        foreach ($worklogUsers as $user) {
+            $hasEntry = Worklog::where('user_id', $user->id)
+                ->where('tenant_id', $tenantId)
+                ->where('work_date', $date)
+                ->exists();
+            
+            if (!$hasEntry) {
+                return false; // At least one user is missing an entry
+            }
+        }
+        
+        return true; // All users have entries for this date
+    }
+
+    /**
+     * Check if ALL users with isWorklog = 1 (who were created on or before the given date) have completed this date
+     * This ensures users are only required to fill entries from their own creation date onwards
+     */
+    private function checkAllUsersWorklogCompletionForDate($date)
+    {
+        $tenantId = Auth::user()->tenant_id;
+        
+        // Get all users with isWorklog = 1 who were created on or before this date
+        $worklogUsers = \App\Models\User::where('is_worklog', 1)
+            ->where('tenant_id', $tenantId)
+            ->where('created_at', '<=', $date . ' 23:59:59') // Include the entire day
+            ->get();
+        
+        if ($worklogUsers->isEmpty()) {
+            return true; // No worklog users existed on this date, so validation passes
+        }
+        
+        // Check if all eligible worklog users have entries for this date
+        foreach ($worklogUsers as $user) {
+            $hasEntry = Worklog::where('user_id', $user->id)
+                ->where('tenant_id', $tenantId)
+                ->where('work_date', $date)
+                ->exists();
+            
+            if (!$hasEntry) {
+                return false; // At least one eligible user is missing an entry
+            }
+        }
+        
+        return true; // All eligible users have entries for this date
+    }
+
+    /**
+     * Get missing dates considering ALL users with isWorklog = 1
+     * This ensures that no one can fill next day's entry until ALL users complete previous days
+     * Each user is only required to fill entries from their own creation date onwards
+     */
+    private function getGlobalMissingDates($startDate, $endDate)
+    {
+        $tenantId = Auth::user()->tenant_id;
+        $missingDates = [];
+        
+        $currentDate = $startDate;
+        while ($currentDate < $endDate) {
+            // Check if the date is a holiday
+            $isHoliday = Holiday::where('tenant_id', $tenantId)
+                ->where('holiday_date', $currentDate)
+                ->exists();
+            
+            // Check if the date is a Sunday (0 = Sunday)
+            $isSunday = date('w', strtotime($currentDate)) == 0;
+            
+            // Skip holidays and Sundays
+            if (!$isHoliday && !$isSunday) {
+                // Check if ALL worklog users (who were created on or before this date) have completed this date
+                if (!$this->checkAllUsersWorklogCompletionForDate($currentDate)) {
+                    $missingDates[] = $currentDate;
+                }
+            }
+            
+            $currentDate = date('Y-m-d', strtotime($currentDate . ' +1 day'));
+        }
+        
+        return $missingDates;
+    }
+
+    /**
+     * Get the earliest creation date among all users with isWorklog = 1
+     * This ensures global validation starts from the earliest user's creation date
+     */
+    private function getEarliestWorklogUserCreationDate()
+    {
+        $tenantId = Auth::user()->tenant_id;
+        
+        $earliestUser = \App\Models\User::where('is_worklog', 1)
+            ->where('tenant_id', $tenantId)
+            ->orderBy('created_at', 'asc')
+            ->first();
+        
+        return $earliestUser ? $earliestUser->created_at->format('Y-m-d') : date('Y-m-d');
+    }
+
+    /**
+     * Get list of users who are missing worklog entries for a specific date
+     * This helps users understand who needs to complete their entries
+     */
+    public function getMissingUsersForDate(Request $request)
+    {
+        $date = $request->input('date');
+        $tenantId = Auth::user()->tenant_id;
+        
+        // Get all users with isWorklog = 1 who were created on or before this date and don't have entries
+        $missingUsers = \App\Models\User::where('is_worklog', 1)
+            ->where('tenant_id', $tenantId)
+            ->where('created_at', '<=', $date . ' 23:59:59') // Only users who existed on this date
+            ->whereDoesntHave('worklogs', function($query) use ($date, $tenantId) {
+                $query->where('work_date', $date)
+                      ->where('tenant_id', $tenantId);
+            })
+            ->select('id', 'name', 'email')
+            ->get();
+        
+        return response()->json([
+            'date' => $date,
+            'missing_users' => $missingUsers,
+            'count' => $missingUsers->count()
+        ]);
+    }
+
+    /**
+     * Check if the current user can submit worklog entries for a specific date
+     * This is a helper method for frontend validation
+     */
+    public function canSubmitWorklog(Request $request)
+    {
+        $selectedDate = $request->input('date');
+        $validation = $this->checkDateValidationInternal($selectedDate);
+        
+        return response()->json([
+            'can_submit' => $validation['valid'],
+            'message' => $validation['message'],
+            'date' => $selectedDate
+        ]);
+    }
+
+    /**
+     * Get a summary of missing worklog entries across all users
+     * This helps team leaders understand what needs to be completed
+     */
+    public function getMissingEntriesSummary()
+    {
+        $tenantId = Auth::user()->tenant_id;
+        
+        // Get all users with isWorklog = 1
+        $worklogUsers = \App\Models\User::where('is_worklog', 1)
+            ->where('tenant_id', $tenantId)
+            ->get();
+        
+        if ($worklogUsers->isEmpty()) {
+            return response()->json([
+                'message' => 'No users with worklog access found.',
+                'summary' => []
+            ]);
+        }
+        
+        // Get the earliest creation date
+        $earliestDate = $this->getEarliestWorklogUserCreationDate();
+        $today = date('Y-m-d');
+        
+        $summary = [];
+        $currentDate = $earliestDate;
+        
+        while ($currentDate <= $today) {
+            // Check if the date is a holiday
+            $isHoliday = Holiday::where('tenant_id', $tenantId)
+                ->where('holiday_date', $currentDate)
+                ->exists();
+            
+            // Check if the date is a Sunday (0 = Sunday)
+            $isSunday = date('w', strtotime($currentDate)) == 0;
+            
+            // Skip holidays and Sundays
+            if (!$isHoliday && !$isSunday) {
+                $missingUsers = [];
+                
+                // Only check users who were created on or before this date
+                $eligibleUsers = $worklogUsers->filter(function($user) use ($currentDate) {
+                    return $user->created_at->format('Y-m-d') <= $currentDate;
+                });
+                
+                foreach ($eligibleUsers as $user) {
+                    $hasEntry = Worklog::where('user_id', $user->id)
+                        ->where('tenant_id', $tenantId)
+                        ->where('work_date', $currentDate)
+                        ->exists();
+                    
+                    if (!$hasEntry) {
+                        $missingUsers[] = [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email
+                        ];
+                    }
+                }
+                
+                if (!empty($missingUsers)) {
+                    $summary[] = [
+                        'date' => $currentDate,
+                        'missing_users' => $missingUsers,
+                        'count' => count($missingUsers)
+                    ];
+                }
+            }
+            
+            $currentDate = date('Y-m-d', strtotime($currentDate . ' +1 day'));
+        }
+        
+        return response()->json([
+            'summary' => $summary,
+            'total_missing_dates' => count($summary)
+        ]);
+    }
+
     private function checkDateValidationInternal($selectedDate)
     {
         $user = Auth::user();
         
-        // Get user's creation date
+        // Get the current user's creation date
         $userCreatedDate = $user->created_at->format('Y-m-d');
         
-        // Check if selected date is before user creation date
+        // Check if selected date is before the current user's creation date
         if ($selectedDate < $userCreatedDate) {
             return [
                 'valid' => false,
@@ -414,13 +652,15 @@ class WorklogController extends Controller
         }
         
         // Check if there are any missing dates between user creation and selected date
-        $missingDates = $this->getMissingDates($userCreatedDate, $selectedDate);
+        // Use global validation to ensure ALL users with isWorklog = 1 have completed previous days
+        // Each user is only required to fill entries from their own creation date onwards
+        $missingDates = $this->getGlobalMissingDates($userCreatedDate, $selectedDate);
         
         if (!empty($missingDates)) {
             $firstMissingDate = $missingDates[0];
             return [
                 'valid' => false,
-                'message' => "You must fill worklog entries in chronological order. Please fill entries for {$firstMissingDate} first."
+                'message' => "System validation: All users with worklog access must complete entries for {$firstMissingDate} before anyone can fill entries for {$selectedDate}. Please ensure all team members complete their previous day entries."
             ];
         }
         

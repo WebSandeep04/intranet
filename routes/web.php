@@ -271,6 +271,12 @@ Route::middleware(['auth'])->group(function () {
              Route::get('/worklog/projects/customer/{customerId}', [WorklogController::class, 'getProjectsByCustomer'])->name('worklog.projects-by-customer');
              Route::get('/worklog/modules/{projectId}', [WorklogController::class, 'getModulesByProject'])->name('worklog.modules');
              Route::post('/worklog/check-date', [WorklogController::class, 'checkDateValidation'])->name('worklog.check-date');
+Route::get('/worklog/missing-users', [WorklogController::class, 'getMissingUsersForDate'])->name('worklog.missing-users');
+Route::get('/worklog/missing-summary', [WorklogController::class, 'getMissingEntriesSummary'])->name('worklog.missing-summary');
+Route::post('/worklog/can-submit', [WorklogController::class, 'canSubmitWorklog'])->name('worklog.can-submit');
+Route::get('/worklog-missing-summary', function() {
+    return view('worklog.missing-summary');
+})->name('worklog-missing-summary');
              Route::post('/worklog/add-to-session', [WorklogController::class, 'addToSession'])->name('worklog.add-to-session');
              Route::get('/worklog/pending-approvals', [WorklogController::class, 'getPendingApprovals'])->name('worklog.pending-approvals');
              Route::post('/worklog/{id}/approve', [WorklogController::class, 'approveWorklog'])->name('worklog.approve');
