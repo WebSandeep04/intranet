@@ -317,5 +317,6 @@ Route::get('/worklog-missing-summary', function() {
              Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
              Route::get('/attendance/history/data', [AttendanceController::class, 'getHistoryData'])->name('attendance.history.data');
              Route::get('/attendance/test', [AttendanceController::class, 'testApi'])->name('attendance.test');
-             Route::get('/attendance/stats', [AttendanceController::class, 'getAttendanceStats'])->name('attendance.stats');
+Route::get('/attendance/stats', [AttendanceController::class, 'getAttendanceStats'])->name('attendance.stats');
+Route::get('/attendance/check-worklog-validation', [AttendanceController::class, 'checkWorklogValidation'])->name('attendance.check-worklog-validation');
          });

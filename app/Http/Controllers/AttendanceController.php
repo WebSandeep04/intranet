@@ -7,12 +7,65 @@ use Illuminate\Http\JsonResponse;
 use App\Models\Attendance;
 use App\Models\Movement;
 use App\Models\User;
+use App\Models\Worklog;
+use App\Models\Holiday;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
+    /**
+     * Check if user can perform attendance actions based on worklog completion
+     * Users with isWorklog = 1 must complete previous day's worklog before attendance
+     */
+    private function canPerformAttendanceAction()
+    {
+        $user = Auth::user();
+        
+        // If user doesn't have worklog access, allow attendance
+        if (!$user->is_worklog) {
+            return ['can_perform' => true, 'message' => ''];
+        }
+        
+        $today = Carbon::today();
+        $userCreatedDate = Carbon::parse($user->created_at)->startOfDay();
+        
+        // Start checking from the user's creation date
+        $checkDate = $userCreatedDate;
+        
+        // Loop through each day from creation date to yesterday
+        while ($checkDate->lt($today)) {
+            // Skip if this date is a holiday or Sunday
+            $isHoliday = Holiday::where('tenant_id', $user->tenant_id)
+                ->where('holiday_date', $checkDate->format('Y-m-d'))
+                ->exists();
+            
+            $isSunday = $checkDate->dayOfWeek === Carbon::SUNDAY;
+            
+            if (!$isHoliday && !$isSunday) {
+                // This is a working day, check if worklog exists
+                $hasWorklogEntry = Worklog::where('user_id', $user->id)
+                    ->where('tenant_id', $user->tenant_id)
+                    ->where('work_date', $checkDate->format('Y-m-d'))
+                    ->exists();
+                
+                if (!$hasWorklogEntry) {
+                    $formattedDate = $checkDate->format('l, F j, Y');
+                    return [
+                        'can_perform' => false, 
+                        'message' => "You must complete your worklog entry for {$formattedDate} before you can perform attendance actions. Please complete your worklog entries chronologically starting from your account creation date."
+                    ];
+                }
+            }
+            
+            // Move to next day
+            $checkDate->addDay();
+        }
+        
+        return ['can_perform' => true, 'message' => ''];
+    }
+
     public function index()
     {
         return view('attendance.index');
@@ -25,6 +78,16 @@ class AttendanceController extends Controller
         ]);
 
         $user = Auth::user();
+        
+        // Check if user can perform attendance actions
+        $attendanceCheck = $this->canPerformAttendanceAction();
+        if (!$attendanceCheck['can_perform']) {
+            return response()->json([
+                'success' => false,
+                'message' => $attendanceCheck['message']
+            ], 403);
+        }
+        
         $today = Carbon::today();
         
         $attendance = Attendance::firstOrCreate([
@@ -87,6 +150,16 @@ class AttendanceController extends Controller
         ]);
 
         $user = Auth::user();
+        
+        // Check if user can perform attendance actions
+        $attendanceCheck = $this->canPerformAttendanceAction();
+        if (!$attendanceCheck['can_perform']) {
+            return response()->json([
+                'success' => false,
+                'message' => $attendanceCheck['message']
+            ], 403);
+        }
+        
         $today = Carbon::today();
         
         $attendance = Attendance::where('user_id', $user->id)
@@ -135,6 +208,16 @@ class AttendanceController extends Controller
         // No validation needed for description
 
         $user = Auth::user();
+        
+        // Check if user can perform attendance actions
+        $attendanceCheck = $this->canPerformAttendanceAction();
+        if (!$attendanceCheck['can_perform']) {
+            return response()->json([
+                'success' => false,
+                'message' => $attendanceCheck['message']
+            ], 403);
+        }
+        
         $today = Carbon::today();
         
         $attendance = Attendance::firstOrCreate([
@@ -177,6 +260,16 @@ class AttendanceController extends Controller
         // No validation needed for description
 
         $user = Auth::user();
+        
+        // Check if user can perform attendance actions
+        $attendanceCheck = $this->canPerformAttendanceAction();
+        if (!$attendanceCheck['can_perform']) {
+            return response()->json([
+                'success' => false,
+                'message' => $attendanceCheck['message']
+            ], 403);
+        }
+        
         $today = Carbon::today();
         
         $attendance = Attendance::where('user_id', $user->id)
@@ -232,6 +325,9 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
         $today = Carbon::today();
+        
+        // Check if user can perform attendance actions
+        $attendanceCheck = $this->canPerformAttendanceAction();
         
         $attendance = Attendance::with('movements')
             ->where('user_id', $user->id)
@@ -295,7 +391,26 @@ class AttendanceController extends Controller
         return response()->json([
             'attendance' => $attendance,
             'movements' => $movements,
-            'status' => $status
+            'status' => $status,
+            'worklog_validation' => [
+                'can_perform_attendance' => $attendanceCheck['can_perform'],
+                'message' => $attendanceCheck['message']
+            ]
+        ]);
+    }
+
+    /**
+     * Check worklog validation status for attendance
+     * This helps frontend show appropriate messages
+     */
+    public function checkWorklogValidation(): JsonResponse
+    {
+        $validation = $this->canPerformAttendanceAction();
+        
+        return response()->json([
+            'can_perform_attendance' => $validation['can_perform'],
+            'message' => $validation['message'],
+            'user_has_worklog_access' => Auth::user()->is_worklog
         ]);
     }
 

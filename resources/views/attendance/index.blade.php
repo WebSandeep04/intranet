@@ -39,6 +39,22 @@
                         </div>
                     </div>
 
+                    <!-- Worklog Validation Alert -->
+                    <div class="row mb-4" id="worklogValidationAlert" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-warning" id="worklogValidationMessage">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>⚠️ Worklog Required:</strong> 
+                                <span id="worklogValidationText"></span>
+                                <div class="mt-2">
+                                    <a href="{{ route('worklog') }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-clock me-1"></i> Go to Worklog
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Attendance Stats -->
                     <div class="row mb-4" id="attendanceStats">
                         <div class="col-md-3">
@@ -201,6 +217,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     loadTodayStatus();
     loadAttendanceStats();
+    checkWorklogValidation();
 });
 
 function punchIn(type) {
@@ -565,6 +582,69 @@ function showAlert(type, message) {
             alert.remove();
         }
     }, 5000);
+}
+
+function checkWorklogValidation() {
+    $.ajax({
+        url: '/attendance/check-worklog-validation',
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            if (!response.can_perform_attendance) {
+                // Show worklog validation alert
+                document.getElementById('worklogValidationAlert').style.display = 'block';
+                document.getElementById('worklogValidationText').textContent = response.message;
+                
+                // Disable all attendance buttons
+                disableAttendanceButtons(true);
+            } else {
+                // Hide worklog validation alert
+                document.getElementById('worklogValidationAlert').style.display = 'none';
+                
+                // Enable all attendance buttons
+                disableAttendanceButtons(false);
+            }
+        },
+        error: function(xhr) {
+            console.error('Worklog validation check error:', xhr);
+        }
+    });
+}
+
+function disableAttendanceButtons(disable) {
+    const buttons = [
+        'officePunchIn', 'officePunchOut',
+        'fieldPunchIn', 'fieldPunchOut',
+        'startBreak', 'endBreak'
+    ];
+    
+    buttons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+            button.disabled = disable;
+            if (disable) {
+                button.classList.add('btn-secondary');
+                button.classList.remove('btn-success', 'btn-danger', 'btn-warning', 'btn-info');
+            } else {
+                // Restore original button classes based on their purpose
+                if (buttonId.includes('PunchIn')) {
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-success');
+                } else if (buttonId.includes('PunchOut')) {
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-info');
+                } else if (buttonId === 'startBreak') {
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-warning');
+                } else if (buttonId === 'endBreak') {
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-info');
+                }
+            }
+        }
+    });
 }
 </script>
 @endsection
