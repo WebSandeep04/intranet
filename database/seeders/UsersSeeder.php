@@ -1,0 +1,27 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+
+class UsersSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+         User::firstOrCreate(
+            ['email' => 'sadmin@triserv360.com'],
+            [
+                'name'      => 'Super Admin',
+                'password'  => Hash::make('Super@123'),
+                'role_id'   => 3,
+                'tenant_id' => 1
+            ]
+        );
+    }
+}

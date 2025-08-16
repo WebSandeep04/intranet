@@ -1,0 +1,117 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-image: url("data:image/svg+xml;utf8,<svg width='1440' height='538' viewBox='0 0 1440 538' fill='none' xmlns='http://www.w3.org/2000/svg'><path d='M-16 557.141V670.83C-16 691.278 0.720491 707.778 21.1671 707.507L1283.11 690.78C1370.09 689.627 1440 618.785 1440 531.794V159.909C1440 50.4383 1331.95 -26.2856 1228.6 9.79167L90.5998 407.023C26.7623 429.307 -16 489.526 -16 557.141Z' fill='url(%23paint0_linear_1_3)'/><defs><linearGradient id='paint0_linear_1_3' x1='1440' y1='236.222' x2='-49.5891' y2='464.898' gradientUnits='userSpaceOnUse'><stop stop-color='%23A200FF'/><stop offset='1' stop-color='%237B00FF'/></linearGradient></defs></svg>");
+    background-repeat: no-repeat;
+    background-position: center 180px;
+    background-size: cover;
+    height: 100vh;
+    background-color: #fff;
+    margin: 0;
+}
+
+
+.loginBox{
+       display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
+    .login-card {
+        background-color: #fff;
+        color: #000;
+        padding: 2rem 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+        border: 2px solid #6049e7;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .login-card h3 {
+        text-align: center;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+    }
+
+    .form-label {
+        font-weight: 500;
+    }
+
+    .form-control {
+        background: #fff;
+        color: #000;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        width: 100%;
+        padding: 0.5rem;
+        font-weight: 500;
+        border-radius: 6px;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10 px;
+        }
+        .social-btn {
+            width: 85%;
+            height: 40px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            transition: 0.3s ease;
+            border: 1px solid gray;
+            
+        }
+        .google { background-color: #fff; }
+        .google:hover { background-color: rgb(207, 237, 249); }
+
+        /* .facebook { background-color: #3b5998; }
+        .facebook:hover { background-color: #2d4373; }
+
+        .github { background-color: #333; }
+        .github:hover { background-color: #000; } */
+
+        .error-message {
+            font-size: 0.9rem;
+        }
+
+        .loginbtn{
+            background-color: #6049e7;
+            width:350px !important;
+            color: white;
+            font-weight: 600;
+        }
+
+         .singupbtn {
+    background-color: #6049e7;
+    width: 100px !important;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(96, 73, 231, 0.7);
+    border: none;
+}
+
+         .singupbtn:hover {
+    color: white;
+    background-color: #6a53ef;
+}

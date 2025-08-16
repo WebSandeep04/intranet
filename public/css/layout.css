@@ -1,0 +1,362 @@
+/* ─────────────── Base Styling ─────────────── */
+body {
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+    background-color: #fafafa;
+}
+
+/* ─────────────── Sidebar ─────────────── */
+.sidebar {
+    position: fixed;
+    top: 40px;
+    left: 0;
+    height: calc(100vh - 40px);
+    width: 220px;
+    background-color: #fff;
+    color: #000;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+    border-right: 2px solid white;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: width 0.3s ease;
+    padding: 1rem; /* matches your p-3 */
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
+}
+
+.sidebar.collapsed {
+    width: 80px !important;
+}
+
+/* Sidebar Title */
+.sidebar h4.title {
+    transition: opacity 0.3s ease;
+}
+
+.sidebar.collapsed h4.title {
+    opacity: 0;
+    pointer-events: none;
+    user-select: none;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Side-items container */
+.side-items {
+    flex-grow: 1;
+    overflow-y: auto;
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: gray #f1f1f1;
+    margin-top: 1rem;
+}
+
+/* Scrollbar styles (Chrome, Edge, Safari) */
+.side-items::-webkit-scrollbar {
+    width: 6px;
+}
+
+.side-items::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.side-items::-webkit-scrollbar-thumb {
+    background-color: gray;
+    border-radius: 10px;
+    border: 1px solid #f1f1f1;
+}
+
+/* Sidebar Links */
+.side-items a {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    color: black;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+}
+
+/* The span containing icon + text */
+.side-items a > span {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    transition: opacity 0.3s ease;
+}
+
+/* Icon inside span */
+.side-items a i.bi {
+    margin-right: 1rem;
+    min-width: 20px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+/* When sidebar collapsed - hide text inside span but keep icon visible */
+.sidebar.collapsed .side-items a > span {
+    justify-content: center;
+}
+
+.sidebar.collapsed .side-items a > span > :not(i) {
+    /* Hide all except icon */
+    display: none;
+}
+
+/* Hide chevron icon when sidebar is collapsed */
+.sidebar.collapsed .side-items a > i.bi-chevron-down {
+    display: none;
+}
+
+/* Optional: adjust chevron icon size */
+.side-items a > i.bi-chevron-down {
+    font-size: 1rem;
+}
+
+/* ─────────────── Toggle Button ─────────────── */
+
+.sidebar.collapsed #toggleSidebar{
+left: 10px;
+}
+
+#toggleSidebar {
+    width: 40px;
+    position: absolute;
+    top: 8px;
+    right: 0;
+    color: #2b216a;
+    border: none;
+    font-size: 24px;
+    background: none;
+    align-self: flex-start;
+    margin-left: 0.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+}
+
+#toggleSidebar:hover {
+    background-color: transparent;
+}
+
+/* ─────────────── Header ─────────────── */
+.header {
+    background-color: #2b216a;
+    padding: 10px 20px;
+    height: 40px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    border-bottom: 2px solid white;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
+    transition: left 0.3s ease;
+}
+
+.header.expanded {
+    left: 0;
+}
+
+/* ─────────────── Content ─────────────── */
+.content {
+    margin-left: 220px;
+    padding: 20px;
+    transition: margin-left 0.3s ease;
+    width: calc(100vw - 220px);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+
+.content.expanded {
+    margin-left: 80px !important;
+    width: calc(100vw - 80px) !important;
+}
+
+/* ─────────────── Main Section ─────────────── */
+.main {
+    padding-top: 60px;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* ─────────────── Logout Button ─────────────── */
+.btn-logout {
+    background-color: #dc3545;
+    border: none;
+    padding: 10px 15px;
+    font-weight: 500;
+    color: #fff;
+    border-radius: 25px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.btn-logout:active {
+    transform: scale(0.98);
+    background-color: #bd2130;
+}
+
+/* ─────────────── Title ─────────────── */
+.title {
+    border-bottom: 2px solid #2b216a;
+    font-weight: 600;
+}
+
+
+/* ------------Alert--------------- */
+
+.alert-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1055; /* Above Bootstrap modals and other content */
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 100%;
+    pointer-events: none; /* Allows clicks to pass through if needed */
+}
+
+.custom-alert {
+    pointer-events: auto; /* Enables clicking on close button */
+    position: relative;
+    width: 300px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    word-break: break-word;
+    transition: transform 0.3s ease-in-out;
+}
+
+.custom-alert-success { background-color: #198754; }
+.custom-alert-error   { background-color: #dc3545; }
+.custom-alert-warning { background-color: #ffc107; color: #212529; }
+.custom-alert-info    { background-color: #0dcaf0; }
+
+.custom-alert-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    font-weight: bold;
+    color: inherit;
+    cursor: pointer;
+}
+
+
+/* button */
+
+.btn.button {
+    background: linear-gradient(135deg, #0d6efd, #1e90ff); 
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn.button:hover {
+    background: linear-gradient(135deg, #0b5ed7, #1a7de6);
+    box-shadow: 0 6px 14px rgba(13, 110, 253, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn.button i {
+    margin-right: 6px;
+}
+
+#paginationLinks {
+    position: absolute;
+    bottom: 50px;
+    left: 60%;
+    transform: translateX(-50%);
+}
+
+/* ─────────────── Mobile Responsive ─────────────── */
+@media (max-width: 767.98px) {
+    .sidebar {
+        display: none;
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 0;
+        width: 100vw;
+    }
+
+    .header {
+        left: 0;
+    }
+
+    .main {
+        padding-top: 100px;
+        width: 100%;
+    }
+
+    body {
+        font-size: 14px;
+    }
+
+    .btn-logout {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+
+    .mobile-nav {
+        display: flex;
+        justify-content: center;
+    }
+}
+
+/* ─────────────── Content Area Improvements ─────────────── */
+.container-fluid {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.col, .col-12, .col-md-3, .col-md-4, .col-md-6, .col-md-8, .col-md-9, .col-lg-3, .col-lg-4, .col-lg-6, .col-lg-8, .col-lg-9 {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+/* Ensure cards and tables take full width */
+.card {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.table-responsive {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.table {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+
