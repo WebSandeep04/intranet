@@ -38,6 +38,7 @@
             <a href="{{route('project')}}" class="d-block py-1 ps-4">Project</a>
             <a href="{{route('module')}}" class="d-block py-1 ps-4">Module</a>
             <a href="{{route('customer-project')}}" class="d-block py-1 ps-4">Customer Projects</a>
+            <a href="{{route('entry-type.index')}}" class="d-block py-1 ps-4">Entry Types</a>
             <a href="{{route('holiday')}}" class="d-block py-1 ps-4">Holidays</a>
         </div>
 
@@ -49,6 +50,7 @@
         <div class="collapse ms-3" id="worklogMenu">
             <a href="{{route('worklog')}}" class="d-block py-1 ps-4">Worklog</a>
             <a href="{{route('worklog-history')}}" class="d-block py-1 ps-4">Worklog History</a>
+            <a href="{{route('leave.index')}}" class="d-block py-1 ps-4">Leave</a>
             @if(auth()->user()->role_id == 1 || auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>
             @endif
@@ -87,6 +89,7 @@
         <div class="collapse ms-3" id="worklogMenu">
             <a href="{{route('worklog')}}" class="d-block py-1 ps-4">Worklog</a>
             <a href="{{route('worklog-history')}}" class="d-block py-1 ps-4">Worklog History</a>
+            <a href="{{route('leave.index')}}" class="d-block py-1 ps-4">Leave</a>
             @if(auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>
             @endif
@@ -126,6 +129,7 @@
         </a>
         <div class="collapse ms-3" id="worklogMenu">
             <a href="{{route('worklog')}}" class="d-block py-1 ps-4">Worklog</a>
+            <a href="{{route('leave.index')}}" class="d-block py-1 ps-4">Leave</a>
             <a href="{{route('worklog-history')}}" class="d-block py-1 ps-4">Worklog History</a>
             @if(auth()->user()->subordinates()->count() > 0)
             <a href="{{route('worklog-approvals')}}" class="d-block py-1 ps-4">Worklog Approvals</a>

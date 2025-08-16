@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Module;
 use App\Models\CustomerProject;
 use App\Models\Holiday;
+use App\Models\Leave;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -452,17 +453,25 @@ class WorklogController extends Controller
         
         // Check if all eligible worklog users have entries for this date
         foreach ($worklogUsers as $user) {
-            $hasEntry = Worklog::where('user_id', $user->id)
+            // Check if user has worklog entry
+            $hasWorklogEntry = Worklog::where('user_id', $user->id)
                 ->where('tenant_id', $tenantId)
                 ->where('work_date', $date)
                 ->exists();
             
-            if (!$hasEntry) {
-                return false; // At least one eligible user is missing an entry
+            // Check if user has leave for this date (all leaves are automatically approved)
+            $hasLeave = Leave::where('user_id', $user->id)
+                ->where('tenant_id', $tenantId)
+                ->where('date', $date)
+                ->exists();
+            
+            // User is considered complete if they have either worklog entry or leave
+            if (!$hasWorklogEntry && !$hasLeave) {
+                return false; // At least one eligible user is missing an entry or leave
             }
         }
         
-        return true; // All eligible users have entries for this date
+        return true; // All eligible users have entries or approved leave for this date
     }
 
     /**
@@ -524,12 +533,16 @@ class WorklogController extends Controller
         $date = $request->input('date');
         $tenantId = Auth::user()->tenant_id;
         
-        // Get all users with isWorklog = 1 who were created on or before this date and don't have entries
+        // Get all users with isWorklog = 1 who were created on or before this date and don't have entries or leave
         $missingUsers = \App\Models\User::where('is_worklog', 1)
             ->where('tenant_id', $tenantId)
             ->where('created_at', '<=', $date . ' 23:59:59') // Only users who existed on this date
             ->whereDoesntHave('worklogs', function($query) use ($date, $tenantId) {
                 $query->where('work_date', $date)
+                      ->where('tenant_id', $tenantId);
+            })
+            ->whereDoesntHave('leaves', function($query) use ($date, $tenantId) {
+                $query->where('date', $date)
                       ->where('tenant_id', $tenantId);
             })
             ->select('id', 'name', 'email')
@@ -609,7 +622,14 @@ class WorklogController extends Controller
                         ->where('work_date', $currentDate)
                         ->exists();
                     
-                    if (!$hasEntry) {
+                    // Check if user has leave for this date (all leaves are automatically approved)
+                    $hasLeave = Leave::where('user_id', $user->id)
+                        ->where('tenant_id', $tenantId)
+                        ->where('date', $currentDate)
+                        ->exists();
+                    
+                    // User is considered complete if they have either worklog entry or leave
+                    if (!$hasEntry && !$hasLeave) {
                         $missingUsers[] = [
                             'id' => $user->id,
                             'name' => $user->name,

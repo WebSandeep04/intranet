@@ -5,6 +5,7 @@ use App\Http\Controllers\AllDataController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerProjectController;
+use App\Http\Controllers\EntryTypeController;
 use App\Http\Controllers\FollowupController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ProspectusController;
@@ -262,6 +263,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/customer-project/customers', [CustomerProjectController::class, 'getCustomers'])->name('customer-project.customers');
     Route::get('/customer-project/projects', [CustomerProjectController::class, 'getProjects'])->name('customer-project.projects');
                  Route::put('/customer-project/{customerProjectId}/module/{moduleId}/status', [CustomerProjectController::class, 'updateModuleStatus'])->name('customer-project.module-status');
+
+// Entry Type routes
+Route::get('/entry-type', [EntryTypeController::class, 'index'])->name('entry-type.index');
+Route::get('/entry-type/fetch', [EntryTypeController::class, 'fetch'])->name('entry-type.fetch');
+Route::post('/entry-type', [EntryTypeController::class, 'store'])->name('entry-type.store');
+Route::put('/entry-type/{id}', [EntryTypeController::class, 'update'])->name('entry-type.update');
+Route::delete('/entry-type/{id}', [EntryTypeController::class, 'destroy'])->name('entry-type.destroy');
+
+// Leave routes
+Route::get('/leave', [App\Http\Controllers\LeaveController::class, 'index'])->name('leave.index');
+Route::get('/leave/fetch', [App\Http\Controllers\LeaveController::class, 'fetch'])->name('leave.fetch');
+Route::get('/leave/types', [App\Http\Controllers\LeaveController::class, 'fetchLeaveTypes'])->name('leave.types');
+Route::post('/leave', [App\Http\Controllers\LeaveController::class, 'store'])->name('leave.store');
+Route::put('/leave/{id}', [App\Http\Controllers\LeaveController::class, 'update'])->name('leave.update');
+Route::delete('/leave/{id}', [App\Http\Controllers\LeaveController::class, 'destroy'])->name('leave.destroy');
              
              // Worklog routes
              Route::get('/worklog', [WorklogController::class, 'index'])->name('worklog');

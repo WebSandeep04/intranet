@@ -9,6 +9,7 @@ use App\Models\Movement;
 use App\Models\User;
 use App\Models\Worklog;
 use App\Models\Holiday;
+use App\Models\Leave;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -44,17 +45,22 @@ class AttendanceController extends Controller
             $isSunday = $checkDate->dayOfWeek === Carbon::SUNDAY;
             
             if (!$isHoliday && !$isSunday) {
-                // This is a working day, check if worklog exists
+                // This is a working day, check if worklog exists or leave
                 $hasWorklogEntry = Worklog::where('user_id', $user->id)
                     ->where('tenant_id', $user->tenant_id)
                     ->where('work_date', $checkDate->format('Y-m-d'))
                     ->exists();
                 
-                if (!$hasWorklogEntry) {
+                $hasLeave = Leave::where('user_id', $user->id)
+                    ->where('tenant_id', $user->tenant_id)
+                    ->where('date', $checkDate->format('Y-m-d'))
+                    ->exists();
+                
+                if (!$hasWorklogEntry && !$hasLeave) {
                     $formattedDate = $checkDate->format('l, F j, Y');
                     return [
                         'can_perform' => false, 
-                        'message' => "You must complete your worklog entry for {$formattedDate} before you can perform attendance actions. Please complete your worklog entries chronologically starting from your account creation date."
+                        'message' => "You must complete your worklog entry or have leave for {$formattedDate} before you can perform attendance actions. Please complete your worklog entries chronologically starting from your account creation date."
                     ];
                 }
             }
